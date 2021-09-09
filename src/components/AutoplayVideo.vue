@@ -114,10 +114,11 @@ onBeforeUnmount(() => {
 })
 </script>
 <style scoped>
-.auto-play-video {
-    background-size: fill;
+.autoplay-video {
+    background-size: contain;
 }
 video {
     width: 100%;
+    min-width: 100%;
 }
 </style>
