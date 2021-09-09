@@ -27,9 +27,13 @@ const props = defineProps({
         type: Boolean,
         default: false
     },
+    lazy: {
+        type: Boolean,
+        default: false
+    }
 })
 
-const { enabled, threshold, loop, src, repeat } = toRefs(props)
+const { enabled, threshold, loop, src, repeat, lazy } = toRefs(props)
 const autoplay = ref(null)
 
 let playing = false
@@ -60,6 +64,7 @@ function toggle() {
 
 function play() {
     if (enabled.value) {
+        if (lazy.value && !animation) init()
         if (animation && enabled.value) {
             animation.setDirection(1)
             animation.play()
@@ -103,27 +108,6 @@ watch(enabled, () => {
     playing = initial
 })
 
-watch(src, () => {
-    if (src.value && playing) {
-        dispose()
-        init()
-        play()
-    } else {
-        pause()
-    }
-})
-
-watch(loop, () => {
-    if (animation) {
-        animation.loop = loop.value
-        if (enabled.value) play()
-    }
-})
-
-watch(repeat, () => {
-    if (animation && enabled.value) toggle()
-})
-
 const observer = new IntersectionObserver(entries => {
     const [entry] = entries || []
     if (!entry) return
@@ -136,8 +120,29 @@ const observer = new IntersectionObserver(entries => {
 }, { threshold: threshold.value, })
 
 onMounted(() => {
-    init()
+    if (!lazy.value) init()
     observer.observe(autoplay.value)
+    
+    watch(src, () => {
+        if (src.value && playing) {
+            dispose()
+            init()
+            play()
+        } else {
+            pause()
+        }
+    })
+
+    watch(loop, () => {
+        if (animation) {
+            animation.loop = loop.value
+            if (enabled.value) play()
+        }
+    })
+
+    watch(repeat, () => {
+        if (animation && enabled.value) toggle()
+    })
 })
 
 onBeforeUnmount(() => {

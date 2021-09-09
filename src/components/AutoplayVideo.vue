@@ -3,11 +3,11 @@
         'background-image': `url('${poster}')`
     }">
         <slot v-if="!src"></slot>
-        <video v-else :loop="loop" :muted="muted" disableRemotePlayback playsinline preload="metadata" :src="src"></video>
+        <video v-else :loop="loop" :muted="muted" disableRemotePlayback playsinline :preload="preload" :src="src"></video>
     </div>
 </template>
 <script setup>
-import { ref, toRefs, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, toRefs, watch, onMounted, onBeforeUnmount, computed } from 'vue'
 
 const props = defineProps({
     threshold: {
@@ -31,11 +31,19 @@ const props = defineProps({
     },
     poster: {
         type: String
+    },
+    lazy: {
+        type: Boolean,
+        default: false
     }
 })
 
-const { enabled, threshold } = toRefs(props)
+const { enabled, threshold, lazy } = toRefs(props)
 const autoplay = ref(null)
+const preload = computed(() => {
+    if (lazy.value) return 'none' 
+    else return 'meta' 
+})
 
 let playing = false
 
@@ -63,16 +71,6 @@ function pause() {
     playing = false
 }
 
-watch(enabled, () => {
-    let initial = playing
-    if (!enabled.value) {
-        pause()
-    } else if (initial) {
-        play()
-    }
-    playing = initial
-})
-
 const observer = new IntersectionObserver(entries => {
     const [entry] = entries || []
     if (!entry) return
@@ -86,6 +84,17 @@ const observer = new IntersectionObserver(entries => {
 
 onMounted(() => {
     observer.observe(autoplay.value)
+
+    watch(enabled, () => {
+        let initial = playing
+        if (!enabled.value) {
+            pause()
+        } else if (initial) {
+            play()
+        }
+        playing = initial
+    })
+
 })
 
 onBeforeUnmount(() => {
