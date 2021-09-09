@@ -1,13 +1,12 @@
 <template>
-    <div class="autoplay-video" ref="autoplay" :style="{
+    <div ref="component" class="autoplay-video" :style="{
         'background-image': `url('${poster}')`
     }">
-        <slot v-if="!src"></slot>
-        <video v-else :loop="loop" :muted="muted" disableRemotePlayback playsinline :preload="preload" :src="src"></video>
+        <video ref="autoplay" :loop="loop" :muted="muted" disableRemotePlayback playsinline :preload="preload" :src="src"></video>
     </div>
 </template>
 <script setup>
-import { ref, toRefs, watch, onMounted, onBeforeUnmount, computed } from 'vue'
+import { ref, toRefs, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue'
 
 const props = defineProps({
     threshold: {
@@ -27,7 +26,7 @@ const props = defineProps({
     },
     muted: {
         type: Boolean,
-        default: false
+        default: true
     },
     poster: {
         type: String
@@ -35,11 +34,16 @@ const props = defineProps({
     lazy: {
         type: Boolean,
         default: false
+    },
+    seek: {
+        type: Number,
+        default: 0
     }
 })
 
-const { enabled, threshold, lazy } = toRefs(props)
+const { enabled, threshold, lazy, seek } = toRefs(props)
 const autoplay = ref(null)
+const component = ref(null)
 const preload = computed(() => {
     if (lazy.value) return 'none' 
     else return 'meta' 
@@ -49,26 +53,38 @@ let playing = false
 
 function play() {
     if (enabled.value) {
-        for(let video of autoplay.value.querySelectorAll('video')) {
-            // console.log('Play:', video.getAttribute('src'))
-            video.play()
-            .then(() => {
-                setTimeout(() => {
-                    video.style.backgroundImage = 'unset'
-                }, 1000)
-            })
-            .catch(() => {})
-        }
+        autoplay.value.play()
+        .then(() => {
+            setTimeout(() => {
+                component.value.style.backgroundImage = 'unset'
+            }, 1000)
+        })
+        .catch(() => {})
     }
     playing = true
 }
 
 function pause() {
-    for(let video of autoplay.value.querySelectorAll('video')) {
-        // console.log('Pause:', video.getAttribute('src'))
-        video.pause()
-    }
+    autoplay.value.pause()
     playing = false
+}
+
+function toggle() {
+    let initial = playing
+    if (!enabled.value) {
+        pause()
+    } else if (initial) {
+        play()
+    }
+    playing = initial
+}
+
+function setCurrentTime() {
+    if (seek.value) {
+        nextTick().then(() => {
+            autoplay.value.currentTime = seek.value
+        })
+    }
 }
 
 const observer = new IntersectionObserver(entries => {
@@ -82,29 +98,19 @@ const observer = new IntersectionObserver(entries => {
     }
 }, { threshold: threshold.value, })
 
+watch(enabled, toggle)
+
 onMounted(() => {
+    setCurrentTime()
     observer.observe(autoplay.value)
-
-    watch(enabled, () => {
-        let initial = playing
-        if (!enabled.value) {
-            pause()
-        } else if (initial) {
-            play()
-        }
-        playing = initial
-    })
-
+    watch(seek, setCurrentTime)
 })
 
 onBeforeUnmount(() => {
-    if (autoplay.value) {
-        observer.unobserve(autoplay.value)
-        for(let video of autoplay.value.querySelectorAll('video')) {
-            video.removeAttribute('src')
-            video.load()
-        }
-    } 
+    observer.unobserve(autoplay.value)
+
+    autoplay.value.removeAttribute('src')
+    autoplay.value.load()
 })
 </script>
 <style scoped>

@@ -16,13 +16,22 @@ const videoLoop = ref(false)
 	<button @click="animationEnabled = !animationEnabled">Enabled {{animationEnabled}}</button>&nbsp;
 	<button @click="animationRepeat = !animationRepeat">Repeat {{animationRepeat}}</button><br><br>
 	<div class="autoplay" @mouseenter="animationEnabled=true" @mouseleave="animationEnabled=false">
-		<AutoplayAnimation src="https://storage.whitebox.pro/cache/almero.com/mikser/storage/animations/elfi.7c0ffc62-b869-490f-8ad6-3e81b8f36059.json" :enabled="animationEnabled" :repeat="animationRepeat" :loop="animationLoop"></AutoplayAnimation>
+		<AutoplayAnimation 
+		src="https://storage.whitebox.pro/cache/almero.com/mikser/storage/animations/elfi.7c0ffc62-b869-490f-8ad6-3e81b8f36059.json" 
+		:enabled="animationEnabled" 
+		:repeat="animationRepeat" 
+		:loop="animationLoop"></AutoplayAnimation>
 	</div><br>
 	<h1>Video</h1>
 	<button @click="videoLoop = !videoLoop">Loop {{videoLoop}}</button>&nbsp;
 	<button @click="videoEnabled = !videoEnabled">Enabled {{videoEnabled}}</button><br><br>
 	<div class="autoplay" @mouseenter="videoEnabled=true" @mouseleave="videoEnabled=false">
-		<AutoplayVideo src="https://storage.whitebox.pro/cache/almero.com/mikser/storage/index/gallery/acherno/preview-resize-1280-720-video-bitrate-600-fps-20.b0099731-1b87-44f6-815d-488d31b52ec2.mp4" :enabled="videoEnabled" :loop="videoLoop"></AutoplayVideo>
+		<AutoplayVideo src="https://storage.whitebox.pro/cache/almero.com/mikser/storage/index/gallery/acherno/preview-resize-1280-720-video-bitrate-600-fps-20.b0099731-1b87-44f6-815d-488d31b52ec2.mp4"
+		:enabled="videoEnabled" 
+		:loop="videoLoop"
+		:seek="50"
+		:muted="true"
+		></AutoplayVideo>
 	</div>
 </template>
 
