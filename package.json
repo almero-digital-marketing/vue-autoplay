@@ -1,10 +1,11 @@
 {
   "name": "vue-autoplay",
-  "version": "1.0.13",
+  "version": "1.0.17",
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "prepare": "npm run build"
   },
   "files": [
     "dist"

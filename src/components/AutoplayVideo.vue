@@ -56,7 +56,9 @@ function play() {
         autoplay.value.play()
         .then(() => {
             setTimeout(() => {
-                component.value.style.backgroundImage = 'unset'
+                if(component.value) {
+                    component.value.style.backgroundImage = 'unset'
+                }
             }, 1000)
         })
         .catch(() => {})
@@ -116,6 +118,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .autoplay-video {
     background-size: contain;
+    background-repeat: no-repeat;
 }
 video {
     width: 100%;
