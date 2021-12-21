@@ -4,9 +4,10 @@
     </div>
 </template>
 <script setup>
-import { ref, toRefs, watch, onBeforeUnmount, onMounted } from 'vue'
+import { ref, toRefs, watch, onBeforeUnmount, onMounted, computed } from 'vue'
 import lottie from 'lottie-web'
 
+const emit = defineEmits(['play', 'pause', 'activate', 'deactivate', 'reverse'])
 const props = defineProps({
     threshold: {
         type: Number,
@@ -30,11 +31,42 @@ const props = defineProps({
     lazy: {
         type: Boolean,
         default: false
+    },
+    singleton: {
+        type: [Boolean, String],
+        default: false
+    },
+    keyframes: {
+        type: [Array, String],
+        default: null
+    },
+    step: {
+        type: Number,
+        default: 0
+    },
+    steps: {
+        type: Number,
+        default: 0
     }
 })
 
-const { enabled, threshold, loop, src, repeat, lazy } = toRefs(props)
+const { enabled, threshold, loop, src, repeat, lazy, keyframes, step, steps } = toRefs(props)
 const autoplay = ref(null)
+const $keyframes = computed(() => {
+    if (keyframes.value) {
+        if (Array.isArray(keyframes.value)) return keyframes.value
+        return keyframes.value.split(',').map(keyframe => Number.parseInt(keyframe))
+    }
+    if (steps.value) {
+        const duration = animation.getDuration(true)
+        const autoKeyframes = [0]
+        for (let index = 1; index < steps.value - 1; index++) {
+            autoKeyframes.push(duration / (index + 1))
+        }
+        autoKeyframes.push(duration - 1)
+        return autoKeyframes
+    }
+})
 
 let playing = false
 let animation
@@ -68,6 +100,7 @@ function play() {
         if (animation && enabled.value) {
             animation.setDirection(1)
             animation.play()
+            emit('play')
         }
     }
     playing = true
@@ -76,6 +109,7 @@ function play() {
 function pause() {
     if (animation) {
         animation.pause()
+        emit('pause')
     }
     playing = false
 }
@@ -84,6 +118,7 @@ function reverse() {
     if (animation) {
         animation.setDirection(-1)
         animation.play()
+        emit('reverse')
     }
 }
 
@@ -108,14 +143,28 @@ watch(enabled, () => {
     playing = initial
 })
 
+watch(step, () => {
+    if ($keyframes.value) {
+        if (animation.currentFrame < $keyframes.value[step.value]) {
+            animation.setDirection(-1)
+        } else {
+            animation.setDirection(1)
+        }
+        console.log(animation.currentFrame, $keyframes.value[step.value])
+        animation.playSegments([animation.currentFrame, $keyframes.value[step.value]], true)
+    }
+})
+
 const observer = new IntersectionObserver(entries => {
     const [entry] = entries || []
     if (!entry) return
 
     if (entry.isIntersecting) {
+        emit('activate')
         play()
     } else {
         pause()
+        emit('deactivate')
     }
 }, { threshold: threshold.value, })
 

@@ -1,13 +1,21 @@
 <template>
-    <div ref="component" class="autoplay-video" :style="{
-        'background-image': `url('${poster}')`
-    }">
-        <video ref="autoplay" :loop="loop" :muted="muted" disableRemotePlayback playsinline :preload="preload" :src="src"></video>
+    <div ref="component" class="autoplay-video">
+        <video 
+            ref="autoplay" 
+            :loop="loop" 
+            :muted="muted" 
+            disableRemotePlayback 
+            playsinline 
+            :preload="preload" 
+            :src="src"
+            @ended="end"></video>
+        <img v-if="showPoster && poster" :src="poster" alt="Poster">
     </div>
 </template>
 <script setup>
 import { ref, toRefs, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue'
 
+const emit = defineEmits(['play', 'pause', 'activate', 'deactivate', 'end'])
 const props = defineProps({
     threshold: {
         type: Number,
@@ -38,6 +46,10 @@ const props = defineProps({
     seek: {
         type: Number,
         default: 0
+    },
+    singleton: {
+        type: [Boolean, String],
+        default: false
     }
 })
 
@@ -48,17 +60,16 @@ const preload = computed(() => {
     if (lazy.value) return 'none' 
     else return 'meta' 
 })
-
+const showPoster = ref(true)
 let playing = false
 
 function play() {
     if (enabled.value) {
         autoplay.value.play()
         .then(() => {
+            emit('play')
             setTimeout(() => {
-                if(component.value) {
-                    component.value.style.backgroundImage = 'unset'
-                }
+                showPoster.value = false
             }, 1000)
         })
         .catch(() => {})
@@ -69,6 +80,7 @@ function play() {
 function pause() {
     autoplay.value.pause()
     playing = false
+    emit('pause')
 }
 
 function toggle() {
@@ -82,11 +94,16 @@ function toggle() {
 }
 
 function setCurrentTime() {
-    if (seek.value) {
+    if (seek.value >= 0) {
         nextTick().then(() => {
             autoplay.value.currentTime = seek.value
         })
     }
+}
+
+function end() {
+    emit('end')
+    setCurrentTime()
 }
 
 const observer = new IntersectionObserver(entries => {
@@ -95,8 +112,10 @@ const observer = new IntersectionObserver(entries => {
 
     if (entry.isIntersecting) {
         play()
+        emit('activate')
     } else {
         pause()
+        emit('deactivate')
     }
 }, { threshold: threshold.value, })
 
@@ -115,10 +134,17 @@ onBeforeUnmount(() => {
     autoplay.value.load()
 })
 </script>
-<style scoped>
+<style lang="less" scoped>
 .autoplay-video {
-    background-size: contain;
-    background-repeat: no-repeat;
+    position: relative;
+    img {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        top: 0;
+        left: 0;
+    }
 }
 video {
     width: 100%;

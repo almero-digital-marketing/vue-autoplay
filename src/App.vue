@@ -8,6 +8,7 @@ const animationLoop = ref(false)
 const animationRepeat = ref(false)
 const videoEnabled = ref(false)
 const videoLoop = ref(false)
+const step = ref(0)
 </script>
 
 <template>
@@ -22,6 +23,20 @@ const videoLoop = ref(false)
 		:repeat="animationRepeat" 
 		:loop="animationLoop"></AutoplayAnimation>
 	</div><br>
+
+	<h1>Step animation</h1>
+	<button @click="step = 0">Step 0</button>&nbsp;
+	<button @click="step = 1">Step 1</button>&nbsp;
+	<button @click="step = 2">Step 2</button>&nbsp;
+	<strong>{{step}}</strong><br><br>
+	<div class="autoplay">
+		<AutoplayAnimation 
+		src="https://storage.whitebox.pro/cache/almero.com/mikser/storage/animations/elfi.7c0ffc62-b869-490f-8ad6-3e81b8f36059.json" 
+		:step="step"
+		:steps="3"
+		></AutoplayAnimation>
+	</div><br>
+
 	<h1>Video</h1>
 	<button @click="videoLoop = !videoLoop">Loop {{videoLoop}}</button>&nbsp;
 	<button @click="videoEnabled = !videoEnabled">Enabled {{videoEnabled}}</button><br><br>
