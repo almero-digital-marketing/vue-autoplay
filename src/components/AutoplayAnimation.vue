@@ -49,27 +49,11 @@ const props = defineProps({
         default: 0
     }
 })
-
 const { enabled, threshold, loop, src, repeat, lazy, keyframes, step, steps } = toRefs(props)
-const autoplay = ref(null)
-const $keyframes = computed(() => {
-    if (keyframes.value) {
-        if (Array.isArray(keyframes.value)) return keyframes.value
-        return keyframes.value.split(',').map(keyframe => Number.parseInt(keyframe))
-    }
-    if (steps.value) {
-        const duration = animation.getDuration(true)
-        const autoKeyframes = [0]
-        for (let index = 1; index < steps.value - 1; index++) {
-            autoKeyframes.push(duration / (index + 1))
-        }
-        autoKeyframes.push(duration - 1)
-        return autoKeyframes
-    }
-})
 
 let playing = false
 let animation
+const totalFrames = ref(0)
 
 function init() {
     if (src.value) {
@@ -81,12 +65,43 @@ function init() {
             path: src.value,
         })
         animation.addEventListener('complete', toggle)
+        animation.addEventListener('DOMLoaded', () => {
+            totalFrames.value = animation.totalFrames
+        })
     }
 }
 
+function getAbsoluteFrame() {
+    const { firstFrame, currentFrame, playDirection } = animation
+    const absoluteFrame = playDirection ? firstFrame + currentFrame : firstFrame
+    return absoluteFrame
+}
+
+const autoplay = ref(null)
+const $keyframes = computed(() => {
+    if (totalFrames.value) {
+        if (keyframes.value) {
+            if (Array.isArray(keyframes.value)) return keyframes.value
+            return keyframes.value.split(',').map(keyframe => Number.parseInt(keyframe))
+        }
+        if (steps.value) {
+            const autoKeyframes = [0]
+            let stepFrames = totalFrames.value / (steps.value - 1)
+            for (let index = 1; index < steps.value - 1; index++) {
+    
+                autoKeyframes.push(stepFrames * index)
+            }
+            autoKeyframes.push(totalFrames.value - 1)
+            console.log(src.value, ...autoKeyframes)
+            return autoKeyframes
+        }
+    }
+})
+
 function toggle() {
     if (repeat.value) {
-        if (animation.currentFrame == 0) {
+        const absoluteFrame = getAbsoluteFrame()
+        if (absoluteFrame == 0) {
             play()
         } else {
             reverse()
@@ -145,13 +160,25 @@ watch(enabled, () => {
 
 watch(step, () => {
     if ($keyframes.value) {
-        if (animation.currentFrame < $keyframes.value[step.value]) {
-            animation.setDirection(-1)
-        } else {
+        const absoluteFrame = getAbsoluteFrame()
+
+        let segment
+        if (absoluteFrame < $keyframes.value[step.value]) {
             animation.setDirection(1)
+            segment = [
+                absoluteFrame, 
+                $keyframes.value[step.value] + 1,
+            ]
+            animation.playSegments(segment, true)
+        } else {
+            animation.setDirection(-1)
+            segment = [
+                absoluteFrame,
+                $keyframes.value[step.value], 
+            ]
         }
-        console.log(animation.currentFrame, $keyframes.value[step.value])
-        animation.playSegments([animation.currentFrame, $keyframes.value[step.value]], true)
+        console.log(src.value, segment)
+        animation.playSegments(segment, true)
     }
 })
 
@@ -198,6 +225,10 @@ onBeforeUnmount(() => {
     if (autoplay.value) observer.unobserve(autoplay.value)
     dispose()
 })
+
+// function showAnimation() {
+//     console.log(animation)
+// }
 
 </script>
 <style scoped>

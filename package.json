@@ -1,6 +1,6 @@
 {
   "name": "vue-autoplay",
-  "version": "1.0.26",
+  "version": "1.0.30",
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
@@ -8,16 +8,11 @@
     "prepare": "npm run build"
   },
   "files": [
+    "src",
     "dist"
   ],
   "main": "./dist/vue-autoplay.umd.js",
   "module": "./dist/vue-autoplay.es.js",
-  "exports": {
-    ".": {
-      "import": "./dist/vue-autoplay.es.js",
-      "require": "./dist/vue-autoplay.umd.js"
-    }
-  },
   "peerDependencies": {
     "lottie-web": "^5.7.13",
     "vue": "^3.2.1"

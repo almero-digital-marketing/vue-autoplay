@@ -28,12 +28,14 @@ const step = ref(0)
 	<button @click="step = 0">Step 0</button>&nbsp;
 	<button @click="step = 1">Step 1</button>&nbsp;
 	<button @click="step = 2">Step 2</button>&nbsp;
+	<button @click="step = 3">Step 3</button>&nbsp;
+	<button @click="step = 4">Step 4</button>&nbsp;
 	<strong>{{step}}</strong><br><br>
-	<div class="autoplay">
+	<div class="autoplay negative">
 		<AutoplayAnimation 
-		src="https://storage.whitebox.pro/cache/almero.com/mikser/storage/animations/elfi.7c0ffc62-b869-490f-8ad6-3e81b8f36059.json" 
+		src="/story-start-t2.json" 
 		:step="step"
-		:steps="3"
+		:steps="5"
 		></AutoplayAnimation>
 	</div><br>
 
@@ -69,5 +71,8 @@ const step = ref(0)
 }
 button {
 	min-width: 120px;
+}
+.negative {
+	background-color: darkolivegreen;
 }
 </style>
