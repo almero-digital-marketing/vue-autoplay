@@ -7,7 +7,7 @@
 import { ref, toRefs, watch, onBeforeUnmount, onMounted, computed } from 'vue'
 import lottie from 'lottie-web'
 
-const emit = defineEmits(['play', 'pause', 'activate', 'deactivate', 'reverse'])
+const emit = defineEmits(['play', 'pause', 'activate', 'deactivate', 'reverse', 'complete', 'loopComplete'])
 const props = defineProps({
     threshold: {
         type: Number,
@@ -64,7 +64,8 @@ function init() {
             loop: loop.value,
             path: src.value,
         })
-        animation.addEventListener('complete', toggle)
+        animation.addEventListener('complete', onComplete)
+        animation.addEventListener('loopComplete', onLoopComplete)
         animation.addEventListener('DOMLoaded', () => {
             totalFrames.value = animation.totalFrames
         })
@@ -109,6 +110,15 @@ function toggle() {
     }
 }
 
+function onComplete() {
+    emit('complete')
+    toggle()
+}
+
+function onLoopComplete() {
+    emit('loopComplete')
+}
+
 function play() {
     if (enabled.value) {
         if (lazy.value && !animation) init()
@@ -139,7 +149,8 @@ function reverse() {
 
 function dispose() {
     if (animation) {
-        animation.removeEventListener('complete', toggle)
+        animation.removeEventListener('complete', onComplete)
+        animation.removeEventListener('loopComplete', onLoopComplete)
         animation.destroy()
     }
 }
