@@ -39,9 +39,9 @@ const props = defineProps({
     poster: {
         type: String
     },
-    lazy: {
-        type: Boolean,
-        default: false
+    preload: {
+        type: String,
+        default: 'meta'
     },
     seek: {
         type: Number,
@@ -53,13 +53,9 @@ const props = defineProps({
     }
 })
 
-const { enabled, threshold, lazy, seek } = toRefs(props)
+const { enabled, threshold, seek } = toRefs(props)
 const autoplay = ref(null)
 const component = ref(null)
-const preload = computed(() => {
-    if (lazy.value) return 'none' 
-    else return 'meta' 
-})
 const showPoster = ref(true)
 let playing = false
 

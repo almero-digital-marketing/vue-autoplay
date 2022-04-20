@@ -68,6 +68,7 @@ function init() {
         animation.addEventListener('loopComplete', onLoopComplete)
         animation.addEventListener('DOMLoaded', () => {
             totalFrames.value = animation.totalFrames
+            if (steps.value) goTo(step.value)
         })
     }
 }
@@ -169,28 +170,32 @@ watch(enabled, () => {
     playing = initial
 })
 
-watch(step, () => {
+function goTo(keyframe) {
     if ($keyframes.value) {
         const absoluteFrame = getAbsoluteFrame()
 
         let segment
-        if (absoluteFrame < $keyframes.value[step.value]) {
+        if (absoluteFrame < $keyframes.value[keyframe]) {
             animation.setDirection(1)
             segment = [
                 absoluteFrame, 
-                $keyframes.value[step.value] + 1,
+                $keyframes.value[keyframe] + 1,
             ]
             animation.playSegments(segment, true)
         } else {
             animation.setDirection(-1)
             segment = [
                 absoluteFrame,
-                $keyframes.value[step.value], 
+                $keyframes.value[keyframe], 
             ]
         }
         console.log(src.value, segment)
         animation.playSegments(segment, true)
     }
+} 
+
+watch(step, () => {
+    goTo(step.value)
 })
 
 const observer = new IntersectionObserver(entries => {
