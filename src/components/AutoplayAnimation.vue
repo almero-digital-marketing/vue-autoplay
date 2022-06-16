@@ -47,9 +47,13 @@ const props = defineProps({
     steps: {
         type: Number,
         default: 0
+    },
+    speed: {
+        type: Number,
+        default: 1
     }
 })
-const { enabled, threshold, loop, src, repeat, lazy, keyframes, step, steps } = toRefs(props)
+const { enabled, threshold, loop, src, repeat, lazy, keyframes, step, steps, speed } = toRefs(props)
 
 let playing = false
 let animation
@@ -67,6 +71,7 @@ function init() {
         animation.addEventListener('complete', onComplete)
         animation.addEventListener('loopComplete', onLoopComplete)
         animation.addEventListener('DOMLoaded', () => {
+            animation.setSpeed(speed.value)
             totalFrames.value = animation.totalFrames
             if (steps.value) goTo(step.value)
         })
@@ -170,6 +175,12 @@ watch(enabled, () => {
     playing = initial
 })
 
+watch(speed, () => {
+    if (animation) {
+        animation.setSpeed(speed.value)
+    }
+})
+
 function goTo(keyframe) {
     if ($keyframes.value) {
         const absoluteFrame = getAbsoluteFrame()
@@ -201,6 +212,7 @@ watch(step, () => {
 const observer = new IntersectionObserver(entries => {
     const [entry] = entries || []
     if (!entry) return
+    if (steps.value) return
 
     if (entry.isIntersecting) {
         emit('activate')
