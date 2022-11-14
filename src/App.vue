@@ -9,6 +9,11 @@ const animationRepeat = ref(false)
 const videoEnabled = ref(false)
 const videoLoop = ref(false)
 const step = ref(0)
+
+function onProgress({ percent }) {
+	console.log('Video percent:', percent)
+}
+
 </script>
 
 <template>
@@ -16,6 +21,11 @@ const step = ref(0)
 	<button @click="animationLoop = !animationLoop">Loop {{animationLoop}}</button>&nbsp;
 	<button @click="animationEnabled = !animationEnabled">Enabled {{animationEnabled}}</button>&nbsp;
 	<button @click="animationRepeat = !animationRepeat">Repeat {{animationRepeat}}</button><br><br>
+	<router-link to="/about">About</router-link>
+	<hr>
+	<router-view></router-view>
+	<hr>
+
 	<div class="autoplay" @mouseenter="animationEnabled=true" @mouseleave="animationEnabled=false">
 		<AutoplayAnimation 
 		src="https://storage.whitebox.pro/cache/almero.com/mikser/storage/animations/elfi.7c0ffc62-b869-490f-8ad6-3e81b8f36059.json" 
@@ -47,7 +57,9 @@ const step = ref(0)
 		:enabled="videoEnabled" 
 		:loop="videoLoop"
 		:seek="50"
+		:controls="true"
 		:muted="true"
+		@progress="onProgress"
 		></AutoplayVideo>
 	</div>
 </template>
@@ -66,7 +78,7 @@ const step = ref(0)
 }
 .autoplay-animation,
 .autoplay-video {
-	width: 300px;
+	width: 600px;
 	border: 1px solid red;
 }
 button {

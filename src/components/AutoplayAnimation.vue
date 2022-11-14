@@ -1,13 +1,13 @@
 <template>
-    <div class="autoplay-animation">
+    <div class="autoplay-animation" :class="{ loaded, playing }">
         <div class="animation" ref="autoplay"></div>
     </div>
 </template>
 <script setup>
-import { ref, toRefs, watch, onBeforeUnmount, onMounted, computed } from 'vue'
+import { ref, toRefs, watch, onBeforeUnmount, onMounted, computed, nextTick } from 'vue'
 import lottie from 'lottie-web'
 
-const emit = defineEmits(['play', 'pause', 'activate', 'deactivate', 'reverse', 'complete', 'loopComplete'])
+const emit = defineEmits(['play', 'pause', 'activate', 'deactivate', 'reverse', 'complete', 'loopComplete', 'progress'])
 const props = defineProps({
     threshold: {
         type: Number,
@@ -51,12 +51,22 @@ const props = defineProps({
     speed: {
         type: Number,
         default: 1
+    },
+    percentages: {
+        type: Array,
+        default: [10,25,50,75,90]
+    },
+    markers: {
+        type: Boolean,
+        default: false
     }
 })
-const { enabled, threshold, loop, src, repeat, lazy, keyframes, step, steps, speed } = toRefs(props)
+const { enabled, threshold, loop, src, repeat, lazy, keyframes, step, steps, speed, markers, percentages } = toRefs(props)
+const loaded = ref(false)
+const playing = ref(false)
 
-let playing = false
 let animation
+let reportedPrcantages = []
 const totalFrames = ref(0)
 
 function init() {
@@ -69,8 +79,11 @@ function init() {
             path: src.value,
         })
         animation.addEventListener('complete', onComplete)
+        animation.addEventListener('enterFrame', onEnterFrame)
         animation.addEventListener('loopComplete', onLoopComplete)
         animation.addEventListener('DOMLoaded', () => {
+            loaded.value = true
+            if (markers.value) console.log('Loaded:', src.value) 
             animation.setSpeed(speed.value)
             totalFrames.value = animation.totalFrames
             if (steps.value) goTo(step.value)
@@ -82,6 +95,17 @@ function getAbsoluteFrame() {
     const { firstFrame, currentFrame, playDirection } = animation
     const absoluteFrame = playDirection ? firstFrame + currentFrame : firstFrame
     return absoluteFrame
+}
+
+function onEnterFrame() {
+    if (animation) {
+        const currentFrame = getAbsoluteFrame()
+        const currentPercentage = percentages.value.filter(percentage => 100 * currentFrame / totalFrames.value > percentage).pop()
+        if (reportedPrcantages.indexOf(currentPercentage) == -1) {
+            reportedPrcantages.push(currentPercentage)
+            emit('progress', { percent: currentPercentage, current: currentFrame, total: totalFrames.value })
+        }
+    }
 }
 
 const autoplay = ref(null)
@@ -132,21 +156,23 @@ function play() {
             animation.setDirection(1)
             animation.play()
             emit('play')
+            if (markers.value) console.log('Play:', src.value) 
         }
     }
-    playing = true
+    playing.value = true
 }
 
 function pause() {
-    if (animation) {
+    if (loaded.value) {
         animation.pause()
         emit('pause')
+        if (markers.value) console.log('Pause:', src.value) 
     }
-    playing = false
+    playing.value = false
 }
 
 function reverse() {
-    if (animation) {
+    if (loaded.value) {
         animation.setDirection(-1)
         animation.play()
         emit('reverse')
@@ -154,6 +180,7 @@ function reverse() {
 }
 
 function dispose() {
+    loaded.value = false
     if (animation) {
         animation.removeEventListener('complete', onComplete)
         animation.removeEventListener('loopComplete', onLoopComplete)
@@ -162,7 +189,7 @@ function dispose() {
 }
 
 watch(enabled, () => {
-    let initial = playing
+    let initial = playing.value
     if (!enabled.value) {
         if (loop.value) {
             pause()
@@ -172,7 +199,7 @@ watch(enabled, () => {
     } else if (initial) {
         play()
     }
-    playing = initial
+    playing.value = initial
 })
 
 watch(speed, () => {
@@ -200,7 +227,7 @@ function goTo(keyframe) {
                 $keyframes.value[keyframe], 
             ]
         }
-        console.log(src.value, segment)
+        if (markers.value) console.log('Go to:', src.value, segment) 
         animation.playSegments(segment, true)
     }
 } 
@@ -225,10 +252,12 @@ const observer = new IntersectionObserver(entries => {
 
 onMounted(() => {
     if (!lazy.value) init()
-    observer.observe(autoplay.value)
+    nextTick(() => {
+        observer.observe(autoplay.value)
+    })
     
     watch(src, () => {
-        if (src.value && playing) {
+        if (src.value && playing.value) {
             dispose()
             init()
             play()

@@ -5,17 +5,19 @@
             :loop="loop" 
             :muted="muted" 
             disableRemotePlayback 
-            playsinline 
+            playsinline
+            :controls="controls"
             :preload="preload" 
             :src="src"
-            @ended="end"></video>
+            @ended="onEnd"
+            @timeupdate="onTimeupdate"></video>
         <img v-if="showPoster && poster" :src="poster" alt="Poster">
     </div>
 </template>
 <script setup>
 import { ref, toRefs, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue'
 
-const emit = defineEmits(['play', 'pause', 'activate', 'deactivate', 'end'])
+const emit = defineEmits(['play', 'pause', 'activate', 'deactivate', 'end', 'progress'])
 const props = defineProps({
     threshold: {
         type: Number,
@@ -24,6 +26,10 @@ const props = defineProps({
     enabled: {
         type: Boolean,
         default: true
+    },
+    controls: {
+        type: Boolean,
+        default: false
     },
     src: {
         type: String,
@@ -47,17 +53,22 @@ const props = defineProps({
         type: Number,
         default: 0
     },
+    percentages: {
+        type: Array,
+        default: [10,25,50,75,90]
+    },
     singleton: {
         type: [Boolean, String],
         default: false
     }
 })
 
-const { enabled, threshold, seek } = toRefs(props)
+const { enabled, threshold, seek, percentages } = toRefs(props)
 const autoplay = ref(null)
 const component = ref(null)
 const showPoster = ref(true)
 let playing = false
+let reportedPrcantages = []
 
 function play() {
     if (enabled.value) {
@@ -97,9 +108,20 @@ function setCurrentTime() {
     }
 }
 
-function end() {
+function onEnd() {
     emit('end')
     setCurrentTime()
+}
+
+function onTimeupdate() {
+    if (autoplay.value) {
+        const { currentTime, duration } = autoplay.value
+        const currentPercentage = percentages.value.filter(percentage => 100 * currentTime / duration > percentage).pop()
+        if (reportedPrcantages.indexOf(currentPercentage) == -1) {
+            reportedPrcantages.push(currentPercentage)
+            emit('progress', { percent: currentPercentage, current: currentTime, total: duration })
+        }
+    }
 }
 
 const observer = new IntersectionObserver(entries => {
