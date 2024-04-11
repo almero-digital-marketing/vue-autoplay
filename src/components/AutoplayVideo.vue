@@ -116,7 +116,7 @@ function onEnd() {
 function onTimeupdate() {
     if (autoplay.value) {
         const { currentTime, duration } = autoplay.value
-        const currentPercentage = percentages.value.filter(percentage => 100 * currentTime / duration > percentage).pop()
+        const currentPercentage = percentages.value.filter(percentage => 100 * currentTime / duration > percentage).pop() || 0
         if (reportedPrcantages.indexOf(currentPercentage) == -1) {
             reportedPrcantages.push(currentPercentage)
             emit('progress', { percent: currentPercentage, current: currentTime, total: duration })
@@ -151,6 +151,7 @@ onBeforeUnmount(() => {
     autoplay.value.removeAttribute('src')
     autoplay.value.load()
 })
+
 </script>
 <style lang="less" scoped>
 .autoplay-video {

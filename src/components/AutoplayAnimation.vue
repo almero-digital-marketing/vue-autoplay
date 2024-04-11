@@ -100,7 +100,7 @@ function getAbsoluteFrame() {
 function onEnterFrame() {
     if (animation) {
         const currentFrame = getAbsoluteFrame()
-        const currentPercentage = percentages.value.filter(percentage => 100 * currentFrame / totalFrames.value > percentage).pop()
+        const currentPercentage = percentages.value.filter(percentage => 100 * currentFrame / totalFrames.value > percentage).pop() || 0
         if (reportedPrcantages.indexOf(currentPercentage) == -1) {
             reportedPrcantages.push(currentPercentage)
             emit('progress', { percent: currentPercentage, current: currentFrame, total: totalFrames.value })
@@ -167,6 +167,14 @@ function pause() {
         animation.pause()
         emit('pause')
         if (markers.value) console.log('Pause:', src.value) 
+    }
+    playing.value = false
+}
+
+function stop() {
+    if (loaded.value) {
+        animation.stop()
+        if (markers.value) console.log('Stop:', src.value) 
     }
     playing.value = false
 }
@@ -283,10 +291,12 @@ onBeforeUnmount(() => {
     dispose()
 })
 
-// function showAnimation() {
-//     console.log(animation)
-// }
-
+defineExpose({ 
+    goTo,
+    play,
+    pause,
+    stop
+})
 </script>
 <style scoped>
 .animation {
