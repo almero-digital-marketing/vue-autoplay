@@ -10,7 +10,9 @@
             :preload="preload" 
             :src="src"
             @ended="onEnd"
-            @timeupdate="onTimeupdate"></video>
+            @timeupdate="onTimeupdate">
+            <slot></slot>
+        </video>
         <img v-if="showPoster && poster" :src="poster" alt="Poster">
     </div>
 </template>
